@@ -2,6 +2,9 @@
 
 Query any SQLite Database from your browser!
 
+This is running in the following location:
+https://cloudmatica.com/sqlite-query/
+
 Simply provide the URL of the remote SQLite database to get started. You can browse a list of tables and views, and execute arbitrary SQL queries.
 
 If the database download is blocked due to CORS policy, it goes through a proxy running at https://sqlite-query.cloudmatica.com.
