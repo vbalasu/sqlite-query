@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
+    <title>Document</title>
+</head>
+<body>
+    <div class="container">
+        <form>
+            <span class="mb-3 col-md-6">
+                <label for="databaseUrl" class="form-label">Database Url</label>
+                <input type="text" class="form-control" id="databaseUrl" aria-describedby="databaseUrl" value="https://cloudmatica.s3.amazonaws.com/db/sakila_master.db">
+                <div id="emailHelp" class="form-text">Enter the full URL path to a SQLite database on the web.</div>
+            </span>
+            <button id="btnConnect" type="button" class="btn btn-primary btn-lg" onclick="connect()">Connect</button>
+            <div id="spinner" class="spinner-border d-none" role="status">
+                <span class="sr-only"></span>
+              </div>
+            <div class="mb-3">
+                <label for="sqlQuery" class="form-label">SQL Query</label>
+                <textarea class="form-control" id="sqlQuery" rows="5">SELECT * FROM sqlite_master
+WHERE type='table' OR type='view';</textarea>
+              </div>
+            <button id = "btnQuery" type="button" class="btn btn-primary btn-lg" onclick="query()" disabled>Run Query</button>
+        </form>
+        <div id="output">
+            <table id="output-table" class="table"></table>
+        </div>
+    </div>
+    <script type="module">
+        function display(data) {
+            var output = [];
+            output.push('<thead><tr>'+Object.keys(data[0]).map(col=>`<th>${col}</th>`).join('')+'</tr><thead>'); // Table heading
+            output.push('<tbody>');
+            for(row of data) {
+                output.push('<tr>'+Object.values(row).map(col=>`<td>${col}</td>`).join('')+'</tr>'); // Table row
+            }
+            output.push('</tbody>');
+            document.querySelector('#output-table').innerHTML = output.join('');
+        }
+        function runQuery(db, sql) {
+            var stmt = db.prepare(sql);
+            var result = [];
+            while(stmt.step()) result.push(stmt.getAsObject());
+            return result;
+        }
+        async function fetchThruProxy(url) {
+            try { // Without proxy
+                var response = await fetch(url);
+                return response;
+            } catch(err) {
+                console.log('Potentially blocked by CORS. Trying proxy.');
+                var response = await fetch(`https://sqlite-query.cloudmatica.com/?url=${url}`);
+                var signed_url = await response.text();
+                console.log(signed_url);
+                var proxy_response = fetch(signed_url);
+                return proxy_response;
+            }
+        }
+        async function connect() {
+            document.querySelector('#btnConnect').setAttribute('disabled', 'disabled');  // Disable the connect button
+            document.querySelector('#spinner').classList.remove('d-none'); // Show the spinner
+            const initSqlJs = require('sql.js');
+            const sqlPromise = initSqlJs({
+            locateFile: file => `https://sql.js.org/dist/${file}`
+            });
+            var url = document.querySelector('#databaseUrl').value;
+            const dataPromise = fetchThruProxy(url).then(res => res.arrayBuffer()).catch(err => console.log(err));
+            const [SQL, buf] = await Promise.all([sqlPromise, dataPromise]);
+            const db = new SQL.Database(new Uint8Array(buf));
+            window.db = db;
+            window.initSqlJs = initSqlJs;
+            window.runQuery = runQuery;
+            window.query = query;
+            console.log(`Successful connection to ${url}`);
+            document.querySelector('#spinner').classList.add('d-none');  // Hide the spinner
+            document.querySelector('#btnQuery').removeAttribute('disabled');  // Enable the query button
+        }
+        function query() {
+            var sqlQuery = document.querySelector('#sqlQuery').value;
+            var data = runQuery(db, sqlQuery);
+            window.data = data;
+            display(data);
+        }
+        window.connect = connect;
+    </script>
+</body>
+</html>

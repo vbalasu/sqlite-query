@@ -1,0 +1,7 @@
+.chalice/deployments/
+.chalice/venv/
+venv/
+__pycache__/
+node_modules/
+.parcel-cache/
+dist/

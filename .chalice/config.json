@@ -1,0 +1,11 @@
+{
+  "version": "2.0",
+  "app_name": "sqlite-query",
+  "manage_iam_role": true,
+  "iam_role_arn": "arn:aws:iam::251566558623:role/sqlite-query-dev",
+  "stages": {
+    "dev": {
+      "api_gateway_stage": "api"
+    }
+  }
+}
