@@ -35,8 +35,9 @@ WHERE type='table' OR type='view';</textarea>
             var output = [];
             output.push('<thead><tr>'+Object.keys(data[0]).map(col=>`<th>${col}</th>`).join('')+'</tr><thead>'); // Table heading
             output.push('<tbody>');
-            for(row of data) {
-                output.push('<tr>'+Object.values(row).map(col=>`<td>${col}</td>`).join('')+'</tr>'); // Table row
+            for(let i = 0; i < data.length; i++) {
+                var row = data[i];
+                 output.push('<tr>'+Object.values(row).map(col=>`<td>${col}</td>`).join('')+'</tr>'); // Table row
             }
             output.push('</tbody>');
             document.querySelector('#output-table').innerHTML = output.join('');
@@ -86,6 +87,7 @@ WHERE type='table' OR type='view';</textarea>
             display(data);
         }
         window.connect = connect;
+        window.display = display;
     </script>
 </body>
 </html>
